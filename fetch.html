@@ -14350,8 +14350,8 @@ a.anchor-link {
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
 <pre>6022
-CPU times: user 366 ms, sys: 61.7 ms, total: 428 ms
-Wall time: 23.2 s
+CPU times: user 259 ms, sys: 88.7 ms, total: 348 ms
+Wall time: 23.3 s
 </pre>
 </div>
 </div>
@@ -14906,8 +14906,8 @@ Name: to, Length: 1900, dtype: int64
 
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>-rw-rw-r-- 1 nyou045 nyou045 283K Nov 25 16:35 edges.csv
--rw-rw-r-- 1 nyou045 nyou045 4.4M Nov 25 16:35 nodes.csv
+<pre>-rw-r--r-- 1 nyou045 nyou045 283K Nov 26 08:44 edges.csv
+-rw-r--r-- 1 nyou045 nyou045 4.4M Nov 26 08:44 nodes.csv
 </pre>
 </div>
 </div>
@@ -14919,12 +14919,12 @@ Name: to, Length: 1900, dtype: int64
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[8]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[9]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">nodes</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">all_entities</span><span class="p">:</span>
-    <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">e</span><span class="p">[</span><span class="s2">&quot;Id&quot;</span><span class="p">],</span> <span class="s2">&quot;date_published&quot;</span><span class="p">:</span> <span class="n">e</span><span class="p">[</span><span class="s2">&quot;D&quot;</span><span class="p">],</span> <span class="s2">&quot;citation_count&quot;</span><span class="p">:</span> <span class="n">e</span><span class="p">[</span><span class="s2">&quot;CC&quot;</span><span class="p">],</span> <span class="s2">&quot;estimated_citation_count&quot;</span><span class="p">:</span> <span class="n">e</span><span class="p">[</span><span class="s2">&quot;ECC&quot;</span><span class="p">],</span> <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="n">e</span><span class="p">[</span><span class="s2">&quot;DN&quot;</span><span class="p">],</span> <span class="s2">&quot;authors&quot;</span><span class="p">:</span> <span class="n">e</span><span class="p">[</span><span class="s2">&quot;AA&quot;</span><span class="p">],</span> <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;F&quot;</span><span class="p">),</span> <span class="s2">&quot;references&quot;</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;RId&quot;</span><span class="p">)})</span>
+    <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">e</span><span class="p">[</span><span class="s2">&quot;Id&quot;</span><span class="p">],</span> <span class="s2">&quot;date_published&quot;</span><span class="p">:</span> <span class="n">e</span><span class="p">[</span><span class="s2">&quot;D&quot;</span><span class="p">],</span> <span class="s2">&quot;citation_count&quot;</span><span class="p">:</span> <span class="n">e</span><span class="p">[</span><span class="s2">&quot;CC&quot;</span><span class="p">],</span> <span class="s2">&quot;estimated_citation_count&quot;</span><span class="p">:</span> <span class="n">e</span><span class="p">[</span><span class="s2">&quot;ECC&quot;</span><span class="p">],</span> <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="n">e</span><span class="p">[</span><span class="s2">&quot;DN&quot;</span><span class="p">],</span> <span class="s2">&quot;authors&quot;</span><span class="p">:</span> <span class="n">e</span><span class="p">[</span><span class="s2">&quot;AA&quot;</span><span class="p">],</span> <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;F&quot;</span><span class="p">),</span> <span class="s2">&quot;references&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">rid</span> <span class="k">for</span> <span class="n">rid</span> <span class="ow">in</span> <span class="n">e</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;RId&quot;</span><span class="p">,[])</span> <span class="k">if</span> <span class="n">rid</span> <span class="ow">in</span> <span class="n">known_ids</span><span class="p">]})</span>
 
 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;data.json&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
     <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
@@ -14948,7 +14948,7 @@ Name: to, Length: 1900, dtype: int64
 
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>-rw-rw-r-- 1 nyou045 nyou045 8.3M Nov 25 16:35 data.json
+<pre>-rw-r--r-- 1 nyou045 nyou045 4.9M Nov 26 08:45 data.json
 </pre>
 </div>
 </div>
