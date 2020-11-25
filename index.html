@@ -6,6 +6,9 @@
         integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg=="
         crossorigin="anonymous"></script>
     <script src="https://unpkg.com/3d-force-graph@1.67.4/dist/3d-force-graph.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.1.0/chroma.min.js"
+        integrity="sha512-yocoLferfPbcwpCMr8v/B0AB4SWpJlouBwgE0D3ZHaiP1nuu5djZclFEIj9znuqghaZ3tdCMRrreLoM8km+jIQ=="
+        crossorigin="anonymous"></script>
     <title>Influence of Decolonizing Methodologies over time</title>
     <style>
         html,
@@ -22,31 +25,76 @@
             background-color: gray;
             padding: 5px;
         }
+
+        #controls {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            background-color: white;
+            padding: 20px;
+        }
     </style>
 </head>
 
 <body>
     <div id="network"></div>
+    <div id="controls">
+        Colour by
+        <select id="color">
+            <option value="citation_count" selected>Citation count</option>
+            <option value="n_authors">Number of authors</option>
+            <option value="n_inst">Number of institutions</option>
+            <option value="field">Primary field</option>
+        </select><br><br>
+        Size by
+        <select id="size">
+            <option value="">Constant</option>
+            <option value="citation_count" selected>Citation count</option>
+            <option value="n_authors">Number of authors</option>
+            <option value="n_inst">Number of institutions</option>
+            <option value="n_fields">Number of fields</option>
+        </select>
+    </div>
 
     <script type="text/javascript">
+        function uniq(arr) {
+            return [...new Set(arr)]
+        }
+        function colorscale(arr) {
+            var breaks = chroma.limits(uniq(arr), 'q', 12);
+            var scale = chroma.scale('Spectral').domain(breaks.reverse());
+            console.log(breaks, scale);
+            return scale
+        }
         $.getJSON("data.json", function (data) {
             console.log(data);
+            window.data = data;
             var edges = []
             for (var node of data) {
                 for (var rid of node.references) {
-                    edges.push({source: node.id, target: rid})
+                    edges.push({ source: node.id, target: rid })
+                }
+                if (node.authors) {
+                    node.n_authors = node.authors.length;
+                    node.n_inst = uniq(node.authors.map(a => a.DAfN)).length;
+                }
+                if (node.fields) {
+                    node.field = node.fields[0].DFN;
+                    node.n_fields = node.fields.length;
                 }
             }
 
+            var scale = colorscale(data.map(n => n.citation_count))
+
             var elem = document.getElementById("network")
-            var graph = ForceGraph3D()(elem)
+            window.graph = ForceGraph3D()(elem)
                 .graphData({
                     nodes: data,
                     links: edges
                 })
                 .enableNodeDrag(false)
                 .nodeVal('citation_count')
-                .nodeAutoColorBy('citation_count')
+                .nodeColor(n => scale(n.citation_count).css())
                 .nodeLabel(node => `<div class="tooltip"><b>${node.title + " (" + node.date_published + ")"}</b><br>
                                 ${node.authors.map(a => a.DAfN ? a.DAuN + " (" + a.DAfN + ")" : a.DAuN).join(",")}<br>
                                 ${node.fields.map(f => f.DFN).join(",")}<br>
@@ -65,6 +113,22 @@
                         3000  // ms transition duration
                     );
                 })
+
+            $("#color").change(function () {
+                console.log(this.value)
+                if (this.value == "field") {
+                    var values = uniq(data.map(n => n[this.value])).sort()
+                    var scale = colorscale(values.keys())
+                    graph.nodeColor(n => scale(values.indexOf(n[this.value])).css())
+                } else {
+                    var scale = colorscale(data.map(n => n[this.value]))
+                    graph.nodeColor(n => scale(n[this.value]).css())
+                }
+            })
+            $("#size").change(function () {
+                console.log(this.value)
+                graph.nodeVal(this.value);
+            })
         });
     </script>
 </body>
