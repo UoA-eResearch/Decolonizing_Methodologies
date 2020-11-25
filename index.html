@@ -53,6 +53,13 @@
             <option value="n_authors">Number of authors</option>
             <option value="n_inst">Number of institutions</option>
             <option value="n_fields">Number of fields</option>
+        </select><br><br>
+        Group by
+        <select id="group">
+            <option value="paper" selected>Paper</option>
+            <option value="author">Author</option>
+            <option value="inst">Institutions</option>
+            <option value="field">Field</option>
         </select>
     </div>
 
@@ -69,8 +76,10 @@
         $.getJSON("data.json", function (data) {
             console.log(data);
             window.data = data;
-            var edges = []
+            window.paper_lookup = {}
+            window.edges = []
             for (var node of data) {
+                paper_lookup[node.id] = node
                 for (var rid of node.references) {
                     edges.push({ source: node.id, target: rid })
                 }
@@ -86,7 +95,7 @@
 
             var scale = colorscale(data.map(n => n.citation_count))
 
-            var elem = document.getElementById("network")
+            window.elem = document.getElementById("network")
             window.graph = ForceGraph3D()(elem)
                 .graphData({
                     nodes: data,
@@ -128,6 +137,78 @@
             $("#size").change(function () {
                 console.log(this.value)
                 graph.nodeVal(this.value);
+            })
+            $("#group").change(function () {
+                console.log(this.value)
+                if (this.value == "paper") {
+                    graph.graphData({
+                        nodes: window.data,
+                        links: window.edges
+                    }).nodeLabel(node => `<div class="tooltip"><b>${node.title + " (" + node.date_published + ")"}</b><br>
+                            ${node.authors.map(a => a.DAfN ? a.DAuN + " (" + a.DAfN + ")" : a.DAuN).join(",")}<br>
+                            ${node.fields.map(f => f.DFN).join(",")}<br>
+                            Citation count: ${node.citation_count}<br>
+                            </div>
+                        `)
+                    return;
+                } else if (this.value == "author" || this.value == "inst") {
+                    var objkey = "authors"
+                } else if (this.value == "field") {
+                    var objkey = "fields"
+                }
+                if (this.value == "author") {
+                    var subkey = "AuId"
+                    var namekey = "DAuN"
+                } else if (this.value == "inst") {
+                    var subkey = "AfId"
+                    var namekey = "DAfN"
+                } else if (this.value == "field") {
+                    var subkey = "FId"
+                    var namekey = "DFN"
+                }
+                var groupedData = {};
+                for (var node of data) {
+                    if (!node[objkey]) continue;
+                    for (var obj of node[objkey]) {
+                        var id = obj[subkey]
+                        if (!id) continue
+                        if (!groupedData[id]) {
+                            groupedData[id] = {
+                                id: id,
+                                citation_count: 0,
+                                name: obj[namekey],
+                                links: {}
+                            }
+                        }
+                        groupedData[id].citation_count += node.citation_count
+                        for (var ref of node.references) {
+                            var paper = paper_lookup[ref];
+                            if (!paper[objkey]) continue
+                            for (var other of paper[objkey]) {
+                                var otherId = other[subkey]
+                                if (!otherId) continue
+                                if (!groupedData[id].links[otherId]) groupedData[id].links[otherId] = 0;
+                                groupedData[id].links[otherId]++;
+                            }
+                        }
+                    }
+                }
+                groupedData = Object.values(groupedData)
+                console.log(groupedData)
+                var edges = [];
+                for (var obj of groupedData) {
+                    for (var link in obj.links) {
+                        if (this.value == "field") continue
+                        edges.push({ source: obj.id, target: parseInt(link), count: obj.links[link] })
+                    }
+                }
+                console.log(edges)
+                graph.graphData({
+                    nodes: groupedData,
+                    links: edges
+                }).nodeLabel(n => `<div class="tooltip">${n.name}<br>Citations: ${n.citation_count}</div>`)
+                    .linkAutoColorBy(e => e.count)
+                    .linkWidth(e => e.count)
             })
         });
     </script>
