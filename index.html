@@ -9,6 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.1.0/chroma.min.js"
         integrity="sha512-yocoLferfPbcwpCMr8v/B0AB4SWpJlouBwgE0D3ZHaiP1nuu5djZclFEIj9znuqghaZ3tdCMRrreLoM8km+jIQ=="
         crossorigin="anonymous"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <title>Influence of Decolonizing Methodologies over time</title>
     <style>
         html,
@@ -33,12 +34,32 @@
             background-color: white;
             padding: 20px;
         }
+
+        #title {
+            position: absolute;
+            top: 30;
+            left: 0;
+            right: 0;
+            margin: auto;
+            z-index: 1000;
+            width: 50%;
+            text-align: center;
+            color: white;
+            border-radius: 5px;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.8);
+            font-family: Arial, Helvetica, sans-serif;
+            text-shadow: 2px 2px #000000;
+            font-weight: normal;
+        }
     </style>
 </head>
 
 <body>
+    <h1 id="title">Influence of Decolonizing Methodologies <span id="year"></span></h1>
     <div id="network"></div>
     <div id="controls">
+        <div id="timeline"></div>
         Colour by
         <select id="color">
             <option value="citation_count" selected>Citation count</option>
@@ -78,7 +99,11 @@
             window.data = data;
             window.paper_lookup = {}
             window.edges = []
+            var time_data = {}
             for (var node of data) {
+                var d = node.date_published.slice(0, 4)
+                if (!time_data[d]) time_data[d] = 0;
+                time_data[d]++;
                 paper_lookup[node.id] = node
                 for (var rid of node.references) {
                     edges.push({ source: node.id, target: rid })
@@ -92,6 +117,51 @@
                     node.n_fields = node.fields.length;
                 }
             }
+
+            console.log(time_data)
+
+            var plotData = [
+                {
+                    x: Object.keys(time_data),
+                    y: Object.values(time_data),
+                    type: 'bar'
+                }
+            ];
+
+            var layout = {
+                title: 'Citations over time',
+                height: 300,
+                width: 300,
+                margin: {
+                    pad: 0,
+                    l: 40,
+                    r: 40,
+                    t: 70,
+                    b: 40
+                }
+            }
+
+            Plotly.newPlot('timeline', plotData, layout);
+            $("#timeline").on('plotly_hover', function (event, data) {
+                var id = event.target.id;
+                var d = data.points[0].x || data.points[0].label;
+                console.log(d)
+                var filtered_data = window.data.filter(n => n.date_published.slice(0, 4) < d)
+                var visible_nodes = filtered_data.map(n => n.id)
+                var edges = [];
+                $("#year").text("as at " + d);
+                for (var node of filtered_data) {
+                    for (var rid of node.references) {
+                        if (visible_nodes.includes(rid)) {
+                            edges.push({ source: node.id, target: rid })
+                        }
+                    }
+                }
+                graph.graphData({
+                    nodes: filtered_data,
+                    links: edges
+                })
+            });
 
             var scale = colorscale(data.map(n => n.citation_count))
 
