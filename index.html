@@ -49,6 +49,7 @@
                                 links: edges.data.filter(e => e.to != 2029648951).map(e => ({ source: e.from, target: e.to }))
                             })
                             .enableNodeDrag(false)
+                            .nodeVal('citation_count')
                             .nodeAutoColorBy('citation_count')
                             .nodeLabel(node => `<div class="tooltip"><b>${node.title + " (" + node.date_published + ")"}</b><br>
                                 ${JSON.parse(node.authors).map(a => a.DAfN ? a.DAuN + " (" + a.DAfN + ")" : a.DAuN).join(",")}<br>
