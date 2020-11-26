@@ -94,12 +94,25 @@
             console.log(breaks, scale);
             return scale
         }
+        function getEdges(nodes) {
+            if (window.group == "field") return []
+            var visible_nodes = nodes.map(n => n.id)
+            var edges = [];
+            for (var node of nodes) {
+                for (var rid in node.references) {
+                    rid = parseInt(rid);
+                    if (visible_nodes.includes(rid)) {
+                        edges.push({ source: node.id, target: rid, count: node.references[rid] })
+                    }
+                }
+            }
+            return edges
+        }
         $.getJSON("data.json", function (data) {
             console.log(data);
             window.data = data;
             window.current_data = data;
             window.paper_lookup = {}
-            window.edges = []
             var time_data = {}
             for (var node of data) {
                 var d = node.date_published.slice(0, 4)
@@ -108,7 +121,6 @@
                 paper_lookup[node.id] = node
                 var tmp = {}
                 for (var rid of node.references) {
-                    edges.push({ source: node.id, target: rid, count: 1 })
                     tmp[rid] = 1
                 }
                 node.references = tmp;
@@ -146,26 +158,19 @@
             }
 
             Plotly.newPlot('timeline', plotData, layout);
+            window.year = 2021
             $("#timeline").on('plotly_hover', function (event, data) {
                 var id = event.target.id;
                 var d = data.points[0].x || data.points[0].label;
                 console.log(d)
+                window.year = d
                 var filtered_data = window.current_data.filter(n => n.date_published.slice(0, 4) < d)
                 console.log(filtered_data)
                 var visible_nodes = filtered_data.map(n => n.id)
-                var edges = [];
                 $("#year").text("as at " + d);
-                for (var node of filtered_data) {
-                    for (var rid in node.references) {
-                        rid = parseInt(rid);
-                        if (visible_nodes.includes(rid)) {
-                            edges.push({ source: node.id, target: rid, count: node.references[rid] })
-                        }
-                    }
-                }
                 graph.graphData({
                     nodes: filtered_data,
-                    links: edges
+                    links: getEdges(filtered_data)
                 })
             });
 
@@ -175,7 +180,7 @@
             window.graph = ForceGraph3D()(elem)
                 .graphData({
                     nodes: data,
-                    links: edges
+                    links: getEdges(data)
                 })
                 .enableNodeDrag(false)
                 .nodeVal('citation_count')
@@ -217,10 +222,12 @@
             })
             $("#group").change(function () {
                 console.log(this.value)
+                window.group = this.value;
                 if (this.value == "paper") {
+                    window.current_data = data;
                     graph.graphData({
                         nodes: window.data,
-                        links: window.edges
+                        links: getEdges(window.data)
                     }).nodeLabel(node => `<div class="tooltip"><b>${node.title + " (" + node.date_published + ")"}</b><br>
                             ${node.authors.map(a => a.DAfN ? a.DAuN + " (" + a.DAfN + ")" : a.DAuN).join(",")}<br>
                             ${node.fields.map(f => f.DFN).join(",")}<br>
@@ -272,19 +279,15 @@
                         }
                     }
                 }
-                groupedData = Object.values(groupedData)
                 console.log(groupedData)
-                var edges = [];
-                for (var obj of groupedData) {
-                    for (var ref in obj.references) {
-                        if (this.value == "field") continue
-                        edges.push({ source: obj.id, target: parseInt(ref), count: obj.references[ref] })
-                    }
+                groupedData = Object.values(groupedData)
+                if (window.year) {
+                    groupedData = groupedData.filter(n => n.date_published.slice(0, 4) < window.year)
                 }
-                console.log(edges)
+                console.log(groupedData)
                 graph.graphData({
                     nodes: groupedData,
-                    links: edges
+                    links: getEdges(groupedData)
                 }).nodeLabel(n => `<div class="tooltip">${n.name}<br>Citations: ${n.citation_count}</div>`)
                     .linkAutoColorBy(e => e.count)
                     .linkWidth(e => e.count)
