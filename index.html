@@ -253,9 +253,11 @@
                 var groupedData = {};
                 for (var node of data) {
                     if (!node[objkey]) continue;
+                    var seen_ids_this_node = {}
                     for (var obj of node[objkey]) {
                         var id = obj[subkey]
-                        if (!id) continue
+                        if (!id || seen_ids_this_node[id]) continue
+                        seen_ids_this_node[id] = true
                         if (!groupedData[id]) {
                             groupedData[id] = {
                                 id: id,
