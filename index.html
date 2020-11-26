@@ -97,6 +97,7 @@
         $.getJSON("data.json", function (data) {
             console.log(data);
             window.data = data;
+            window.current_data = data;
             window.paper_lookup = {}
             window.edges = []
             var time_data = {}
@@ -105,9 +106,12 @@
                 if (!time_data[d]) time_data[d] = 0;
                 time_data[d]++;
                 paper_lookup[node.id] = node
+                var tmp = {}
                 for (var rid of node.references) {
-                    edges.push({ source: node.id, target: rid })
+                    edges.push({ source: node.id, target: rid, count: 1 })
+                    tmp[rid] = 1
                 }
+                node.references = tmp;
                 if (node.authors) {
                     node.n_authors = node.authors.length;
                     node.n_inst = uniq(node.authors.map(a => a.DAfN)).length;
@@ -146,14 +150,16 @@
                 var id = event.target.id;
                 var d = data.points[0].x || data.points[0].label;
                 console.log(d)
-                var filtered_data = window.data.filter(n => n.date_published.slice(0, 4) < d)
+                var filtered_data = window.current_data.filter(n => n.date_published.slice(0, 4) < d)
+                console.log(filtered_data)
                 var visible_nodes = filtered_data.map(n => n.id)
                 var edges = [];
                 $("#year").text("as at " + d);
                 for (var node of filtered_data) {
-                    for (var rid of node.references) {
+                    for (var rid in node.references) {
+                        rid = parseInt(rid);
                         if (visible_nodes.includes(rid)) {
-                            edges.push({ source: node.id, target: rid })
+                            edges.push({ source: node.id, target: rid, count: node.references[rid] })
                         }
                     }
                 }
@@ -195,6 +201,7 @@
 
             $("#color").change(function () {
                 console.log(this.value)
+                var data = graph.graphData().nodes;
                 if (this.value == "field") {
                     var values = uniq(data.map(n => n[this.value])).sort()
                     var scale = colorscale(values.keys())
@@ -221,18 +228,17 @@
                             </div>
                         `)
                     return;
-                } else if (this.value == "author" || this.value == "inst") {
-                    var objkey = "authors"
-                } else if (this.value == "field") {
-                    var objkey = "fields"
                 }
                 if (this.value == "author") {
+                    var objkey = "authors"
                     var subkey = "AuId"
                     var namekey = "DAuN"
                 } else if (this.value == "inst") {
+                    var objkey = "authors"
                     var subkey = "AfId"
                     var namekey = "DAfN"
                 } else if (this.value == "field") {
+                    var objkey = "fields"
                     var subkey = "FId"
                     var namekey = "DFN"
                 }
@@ -247,18 +253,21 @@
                                 id: id,
                                 citation_count: 0,
                                 name: obj[namekey],
-                                links: {}
+                                date_published: node.date_published,
+                                references: {}
                             }
                         }
                         groupedData[id].citation_count += node.citation_count
-                        for (var ref of node.references) {
+                        if (groupedData[id].date_published > node.date_published) groupedData[id].date_published = node.date_published;
+                        for (var ref in node.references) {
+                            ref = parseInt(ref)
                             var paper = paper_lookup[ref];
                             if (!paper[objkey]) continue
                             for (var other of paper[objkey]) {
                                 var otherId = other[subkey]
                                 if (!otherId) continue
-                                if (!groupedData[id].links[otherId]) groupedData[id].links[otherId] = 0;
-                                groupedData[id].links[otherId]++;
+                                if (!groupedData[id].references[otherId]) groupedData[id].references[otherId] = 0;
+                                groupedData[id].references[otherId]++;
                             }
                         }
                     }
@@ -267,9 +276,9 @@
                 console.log(groupedData)
                 var edges = [];
                 for (var obj of groupedData) {
-                    for (var link in obj.links) {
+                    for (var ref in obj.references) {
                         if (this.value == "field") continue
-                        edges.push({ source: obj.id, target: parseInt(link), count: obj.links[link] })
+                        edges.push({ source: obj.id, target: parseInt(ref), count: obj.references[ref] })
                     }
                 }
                 console.log(edges)
@@ -279,6 +288,7 @@
                 }).nodeLabel(n => `<div class="tooltip">${n.name}<br>Citations: ${n.citation_count}</div>`)
                     .linkAutoColorBy(e => e.count)
                     .linkWidth(e => e.count)
+                window.current_data = groupedData;
             })
         });
     </script>
