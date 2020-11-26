@@ -164,7 +164,7 @@
                 var d = data.points[0].x || data.points[0].label;
                 console.log(d)
                 window.year = d
-                var filtered_data = window.current_data.filter(n => n.date_published.slice(0, 4) < d)
+                var filtered_data = window.current_data.filter(n => n.date_published.slice(0, 4) <= d)
                 console.log(filtered_data)
                 var visible_nodes = filtered_data.map(n => n.id)
                 $("#year").text("as at " + d);
@@ -225,7 +225,7 @@
                 window.group = this.value;
                 if (this.value == "paper") {
                     window.current_data = data;
-                    var filtered_data = data.filter(n => n.date_published.slice(0, 4) < d)
+                    var filtered_data = data.filter(n => n.date_published.slice(0, 4) <= d)
                     graph.graphData({
                         nodes: filtered_data,
                         links: getEdges(filtered_data)
@@ -283,7 +283,7 @@
                 console.log(groupedData)
                 groupedData = Object.values(groupedData)
                 if (window.year) {
-                    groupedData = groupedData.filter(n => n.date_published.slice(0, 4) < window.year)
+                    groupedData = groupedData.filter(n => n.date_published.slice(0, 4) <= window.year)
                 }
                 console.log(groupedData)
                 graph.graphData({
