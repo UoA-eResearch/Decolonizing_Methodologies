@@ -97,9 +97,9 @@
                         //widthMinPixels: .2,
                         getSourcePosition: e => e.from,
                         getTargetPosition: e => e.to,
-                        getSourceColor: e => arcscale(e.count).rgb(),
-                        getTargetColor: e => arcscale(e.count).rgb(),
-                        getWidth: .2 // e => e.count
+                        getSourceColor: e => arcscale(e.count).rgb().concat(20),
+                        getTargetColor: e => arcscale(e.count).rgb().concat(20),
+                        getWidth: e => e.count
                     })
                 ]
             });
