@@ -225,9 +225,10 @@
                 window.group = this.value;
                 if (this.value == "paper") {
                     window.current_data = data;
+                    var filtered_data = data.filter(n => n.date_published.slice(0, 4) < d)
                     graph.graphData({
-                        nodes: window.data,
-                        links: getEdges(window.data)
+                        nodes: filtered_data,
+                        links: getEdges(filtered_data)
                     }).nodeLabel(node => `<div class="tooltip"><b>${node.title + " (" + node.date_published + ")"}</b><br>
                             ${node.authors.map(a => a.DAfN ? a.DAuN + " (" + a.DAfN + ")" : a.DAuN).join(",")}<br>
                             ${node.fields.map(f => f.DFN).join(",")}<br>
